@@ -39,6 +39,6 @@ the gratuitous closure call that occurs in the former and not in the latter. *cs
 - interpreter locals that aren't live between calls don't need to be listed in *reds*
 
 ## future work
-- continue testing CF Bolz' other recommendations
+- continue testing/integrating CF Bolz-Tereick's other recommendations
 - try out machine ints (esp. w/ bigint interop) and floats
 - maybe move beyond hand-assembled tests?
