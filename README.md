@@ -2,7 +2,7 @@
 playing with rpython
 
 ## goals
-this is an attempt to (a) learn how to structure an rpython bytecode interpreter, and (b) check that we can get the JIT to optimise in cases we hope it will
+this is an attempt to (a) learn how to structure an [rpython](https://rpython.readthedocs.io/en/latest/) bytecode interpreter, and (b) check that we can get the JIT to optimise in cases we hope it will
 
 ## preliminary results
 promising! *gcd* shows that multiway loop nests are JIT'ed as well as plain loops; that *cfac* is JIT'ed to similar performance as *fac* shows that the JIT successfully elides
@@ -26,7 +26,7 @@ the gratuitous closure call that occurs in the former and not in the latter. *cs
   <dt>gcd</dt>
   <dd>Dijkstra's symmetric two-branched subtractive gcd; tests bridge generation</dd>
   <dt>sum</dt>
-  <dd>Like <em>fac</em> but adds instead of multiplies to increase the cost of control flow</dd>
+  <dd>Like <em>fac</em> but adds instead of multiplies to increase the relative cost of control flow</dd>
   <dt>csum</dt>
   <dd>Like <em>cfac</em>, it wraps the addition in a gratuitous closure call</dd>
 </dl>
