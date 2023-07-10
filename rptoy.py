@@ -5,29 +5,29 @@ from rpython.rlib.rbigint import rbigint
 ################################################################################
 
 nam = """
-REP COM LAM LIT MOC CUS REZ MUL RHO SUB XGE XLT HLT APP CLO REF RET
+REP COM LAM LIT MOC CUS REZ MUL RHO SUB XGE XLT HLT APP CLO REF RET TNI ADD
 """.strip().split(' ')
 
 DELTA=1000
 
 REP,COM,LAM,LIT,MOC,CUS,REZ,MUL,RHO,\
-SUB,XGE,XLT,HLT,APP,CLO,REF,RET = range(DELTA,DELTA+len(nam))
+SUB,XGE,XLT,HLT,APP,CLO,REF,RET,TNI,ADD = range(DELTA,DELTA+len(nam))
 
 rep = lambda xs: xs+[REP, len(xs)]
 pad = lambda n,xs: xs + (n-len(xs))*[HLT]
 
 l0 = [LAM, LIT, 1, COM, 0, 1, RHO]
-l1 = [LAM, MOC, 0, CUS, 1, MUL, 1, 2, COM, 3, 4, RHO]
+l1 = [LAM, MOC, 0, CUS, 1, TNI, 2, MUL, 1, 2, COM, 3, 4, RHO]
 l2 = [LAM, MOC, 0, REZ, 1, RHO]
 
 pfac = l0 + rep(l1) + l2 + [HLT]
 
 l0 = [LAM, LIT, 1, COM, 0, 1, RHO]
-l1 = [LAM, MOC, 0, CUS, 1, CLO, 40, APP, 4, 2, COM, 3, 5, RHO]
+l1 = [LAM, MOC, 0, CUS, 1, TNI, 2, CLO, 35, APP, 4, 2, COM, 3, 5, RHO]
 l2 = [LAM, MOC, 0, REZ, 1, RHO]
-l3 = [LAM, REF, 1, 1, MUL, 0, 1, RHO, RET]
+l3 = [LAM, TNI, 0, REF, 1, 1, MUL, 0, 1, RHO, RET]
 
-pcfac = pad(40, l0 + rep(l1) + l2 + [HLT]) + l3
+pcfac = pad(35, l0 + rep(l1) + l2 + [HLT]) + l3
 
 l0 = [LAM, MOC, 0, XLT, 1, 2, SUB, 2, 1, COM, 1, 3, RHO]
 l1 = [LAM, MOC, 0, XLT, 2, 1, SUB, 1, 2, COM, 3, 2, RHO]
@@ -35,8 +35,21 @@ l2 = [LAM, MOC, 0, RHO]
 
 pgcd = rep(rep(l0) + l1) + l2 + [HLT]
 
-prog = pad(200,pad(100,pcfac)+pfac)+pgcd
-code = {"cfac":0, "fac":100, "gcd":200}
+l0 = [LAM, LIT, 0, COM, 0, 1, RHO]
+l1 = [LAM, MOC, 0, CUS, 1, TNI, 2, CLO, 335, APP, 4, 2, COM, 3, 5, RHO]
+l2 = [LAM, MOC, 0, REZ, 1, RHO]
+l3 = [LAM, TNI, 0, REF, 1, 1, ADD, 0, 1, RHO, RET]
+
+pcsum = pad(35, l0 + rep(l1) + l2 + [HLT]) + l3
+
+l0 = [LAM, LIT, 0, COM, 0, 1, RHO]
+l1 = [LAM, MOC, 0, CUS, 1, TNI, 2, ADD, 1, 2, COM, 3, 4, RHO]
+l2 = [LAM, MOC, 0, REZ, 1, RHO]
+
+psum = l0 + rep(l1) + l2 + [HLT]
+
+prog = pad(400,pad(300,pad(200,pad(100,pcfac)+pfac)+pgcd)+pcsum)+psum
+code = {"cfac":0, "fac":100, "gcd":200, "csum":300, "sum":400}
 
 ################################################################################
 get_location = lambda pc: "%d: %s" % (pc,
@@ -50,7 +63,7 @@ jitdriver = jit.JitDriver(greens=['pc'], reds=['ctx','stack','link'],
 ################################################################################
 
 class Box(object):
-    pass
+    _attrs_ = []
 
 class IntBox(Box):
     def __init__(self, val):
@@ -58,6 +71,7 @@ class IntBox(Box):
 
     ge  = lambda self, other: self.intval.ge(other.intval)
     lt  = lambda self, other: self.intval.lt(other.intval)
+    add = lambda self, other: IntBox(self.intval.add(other.intval))
     sub = lambda self, other: IntBox(self.intval.sub(other.intval))
     mul = lambda self, other: IntBox(self.intval.mul(other.intval))
 
@@ -130,6 +144,15 @@ class Link(object):
 
     getref = lambda self,x: self.frame if x==1 else self.olink.getref(x-1)
 
+class Stack(object):
+    def __init__(self, ctx, pc, link, prev):
+        self.ctx = ctx
+        self.pc = pc
+        self.link = link
+        self.prev = prev
+
+    pop = lambda self: (self.ctx, self.pc, self.link, self.prev)
+
 ################################################################################
 
 def run(ipc,ini):
@@ -138,10 +161,10 @@ def run(ipc,ini):
     op = HLT
     ctx  = Ctx(ini)
     flag = False
-    x = 0
-    y = 0
-    stack = [(Ctx(None),0,None)]
-    link = Link(None, None)
+    x = Box()
+    y = Box()
+    stack = None
+    link = None
 
     def fail(pc):
         while prog[pc] != RHO:
@@ -159,10 +182,10 @@ def run(ipc,ini):
             pc = pc+1
         elif op == COM: # list construction, cf MOC
             pc = pc+1
-            x = prog[pc]
+            x = ctx[prog[pc]]
             pc = pc+1
-            y = prog[pc]
-            ctx.append(dn(up(ctx[x])+up(ctx[y])))
+            y = ctx[prog[pc]]
+            ctx.append(dn(up(x)+up(y)))
         elif op == LAM: # start a frame, cf RHO
             ctx.lam()
         elif op == LIT: # int literal
@@ -170,59 +193,76 @@ def run(ipc,ini):
             ctx.append(IntBox(rbigint.fromint(prog[pc])))
         elif op == MOC: # list deconstruction, cf COM
             pc = pc+1
-            x = prog[pc]
-            if not isinstance(ctx[x],ListBox): pc=fail(pc)
-            elif len(ctx[x].listval)<2: pc=fail(pc)
-            else: ctx[x].split(ctx)
+            x = ctx[prog[pc]]
+            if not isinstance(x,ListBox): pc=fail(pc)
+            elif len(x.listval)<2: pc=fail(pc)
+            else: x.split(ctx)
         elif op == CUS: # nat deconstruction S(x)
             pc = pc+1
-            x = prog[pc]
-            if not isinstance(ctx[x],IntBox): pc=fail(pc)
-            elif not ctx[x].intval.ge(rbigint.fromint(1)): pc=fail(pc)
-            else: ctx.append(IntBox(ctx[x].intval.int_sub(1)))
+            x = ctx[prog[pc]]
+            if not isinstance(x,IntBox): pc=fail(pc)
+            elif not x.intval.int_ge(1): pc=fail(pc)
+            else: ctx.append(IntBox(x.intval.int_sub(1)))
         elif op == REZ: # nat deconstruction Z
             pc = pc+1
-            x = prog[pc]
-            if not isinstance(ctx[x],IntBox): pc=fail(pc)
-            elif not ctx[x].intval.int_lt(1): pc=fail(pc)
+            x = ctx[prog[pc]]
+            if not isinstance(x,IntBox): pc=fail(pc)
+            elif not x.intval.int_lt(1): pc=fail(pc)
+        elif op == TNI: # any int
+            pc = pc+1
+            x = ctx[prog[pc]]
+            if not isinstance(x,IntBox): pc=fail(pc)
         elif op == MUL:
             pc = pc+1
-            x = prog[pc]
+            x = ctx[prog[pc]]
             pc = pc+1
-            y = prog[pc]
-            ctx.append(ctx[x].mul(ctx[y]))
-        elif op == RHO: # end a ctx, cf LAM
+            y = ctx[prog[pc]]
+            assert isinstance(x,IntBox)
+            assert isinstance(y,IntBox)
+            ctx.append(x.mul(y))
+        elif op == RHO: # end a frame, cf LAM
             ctx.rho()
+        elif op == ADD:
+            pc = pc+1
+            x = ctx[prog[pc]]
+            pc = pc+1
+            y = ctx[prog[pc]]
+            assert isinstance(x,IntBox)
+            assert isinstance(y,IntBox)
+            ctx.append(x.add(y))
         elif op == SUB:
             pc = pc+1
-            x = prog[pc]
+            x = ctx[prog[pc]]
             pc = pc+1
-            y = prog[pc]
-            ctx.append(ctx[x].sub(ctx[y]))
+            y = ctx[prog[pc]]
+            assert isinstance(x,IntBox)
+            assert isinstance(y,IntBox)
+            ctx.append(x.sub(y))
         elif op == XGE:
             pc = pc+1
-            x = prog[pc]
+            x = ctx[prog[pc]]
             pc = pc+1
-            y = prog[pc]
-            if not isinstance(ctx[x],IntBox): pc=fail(pc)
-            if not isinstance(ctx[y],IntBox): pc=fail(pc)
-            if not ctx[x].ge(ctx[y]): pc=fail(pc)
+            y = ctx[prog[pc]]
+            if (not isinstance(x,IntBox) or
+                not isinstance(y,IntBox) or
+                not x.ge(y)): pc=fail(pc)
         elif op == XLT:
             pc = pc+1
-            x = prog[pc]
+            x = ctx[prog[pc]]
             pc = pc+1
-            y = prog[pc]
-            if not isinstance(ctx[x],IntBox): pc=fail(pc)
-            if not isinstance(ctx[y],IntBox): pc=fail(pc)
-            if not ctx[x].lt(ctx[y]): pc=fail(pc)
+            y = ctx[prog[pc]]
+            if (not isinstance(x,IntBox) or
+                not isinstance(y,IntBox) or
+                not x.lt(y)): pc=fail(pc)
         elif op == APP:
             pc = pc+1
-            x = prog[pc]
+            x = ctx[prog[pc]]
             pc = pc+1
-            y = prog[pc]
-            stack.append((ctx, pc, link))
-            pc, link = ctx[x].cloval
-            ctx = Ctx(ctx[y])
+            y = ctx[prog[pc]]
+            stack = Stack(ctx, pc, link, stack)
+            assert isinstance(x,CloBox)
+            pc, link = x.cloval
+            ctx = Ctx(y)
             continue
         elif op == CLO:
             pc = pc+1
@@ -233,10 +273,12 @@ def run(ipc,ini):
             x = prog[pc]
             pc = pc+1
             y = prog[pc]
+            assert isinstance(link,Link)
             ctx.append(link.getref(x)[y])
         elif op == RET:
             rval = ctx.state
-            ctx,pc,link = stack.pop()
+            assert stack is not None
+            ctx,pc,link,stack = stack.pop()
             ctx.append(rval)
             flag = False
         elif op == HLT: # end run
@@ -250,9 +292,16 @@ facargs = IntBox(rbigint.fromint(1000))
 gcdargs = ListBox([IntBox(rbigint.fromint(6*9035768)),
                    IntBox(rbigint.fromint(6*8675309))])
 
-conf = {"fac":  (facargs, 200),
-        "cfac": (facargs, 200),
-        "gcd":  (gcdargs, 2000)}
+facres = IntBox(rbigint.fromstr(
+"402387260077093773543702433923003985719374864210714632543799910429938512398629020592044208486969404800479988610197196058631666872994808558901323829669944590997424504087073759918823627727188732519779505950995276120874975462497043601418278094646496291056393887437886487337119181045825783647849977012476632889835955735432513185323958463075557409114262417474349347553428646576611667797396668820291207379143853719588249808126867838374559731746136085379534524221586593201928090878297308431392844403281231558611036976801357304216168747609675871348312025478589320767169132448426236131412508780208000261683151027341827977704784635868170164365024153691398281264810213092761244896359928705114964975419909342221566832572080821333186116811553615836546984046708975602900950537616475847728421889679646244945160765353408198901385442487984959953319101723355556602139450399736280750137837615307127761926849034352625200015888535147331611702103968175921510907788019393178114194545257223865541461062892187960223838971476088506276862967146674697562911234082439208160153780889893964518263243671616762179168909779911903754031274622289988005195444414282012187361745992642956581746628302955570299024324153181617210465832036786906117260158783520751516284225540265170483304226143974286933061690897968482590125458327168226458066526769958652682272807075781391858178889652208164348344825993266043367660176999612831860788386150279465955131156552036093988180612138558600301435694527224206344631797460594682573103790084024432438465657245014402821885252470935190620929023136493273497565513958720559654228749774011413346962715422845862377387538230483865688976461927383814900140767310446640259899490222221765904339901886018566526485061799702356193897017860040811889729918311021171229845901641921068884387121855646124960798722908519296819372388642614839657382291123125024186649353143970137428531926649875337218940694281434118520158014123344828015051399694290153483077644569099073152433278288269864602789864321139083506217095002597389863554277196742822248757586765752344220207573630569498825087968928162753848863396909959826280956121450994871701244516461260379029309120889086942028510640182154399457156805941872748998094254742173582401063677404595741785160829230135358081840096996372524230560855903700624271243416909004153690105933983835777939410970027753472000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"))
+gcdres = IntBox(rbigint.fromint(6))
+sumres = IntBox(rbigint.fromint(500500))
+
+conf = {"fac":  (facargs, 800, facres),
+        "cfac": (facargs, 800, facres),
+        "sum":  (facargs, 2000, sumres),
+        "csum": (facargs, 2000, sumres),
+        "gcd":  (gcdargs, 16000, gcdres)}
 
 def main(argv):
     if len(argv)>2:
@@ -266,10 +315,19 @@ def main(argv):
         if DELTA<=prog[i]:
             print(get_location(i))
 
-    ini, reps = conf.get(sel,(IntBox(rbigint.fromint(0)),200))
+    zero = IntBox(rbigint.fromint(0))
+    ini, reps, chk = conf.get(sel,(zero,400,zero))
 
     for i in range(reps): run(ipc,ini)
-    print(run(ipc,ini).str())
+
+    res = run(ipc,ini)
+    if not isinstance(res,IntBox) or not res.intval.eq(chk.intval):
+        print("ERROR:")
+        print(res.str())
+        print("was not equal to:")
+        print(chk.str())
+        return 1
+
     return 0
 
 target = lambda *args: main

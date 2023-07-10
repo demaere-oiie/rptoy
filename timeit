@@ -1,6 +1,7 @@
-for p in tare fac cfac gcd; do
+for p in tare fac cfac gcd sum csum; do
+  echo "- $p"
   for jo in "" off; do
-    time ./${1:-rptoy-c} $p $jo >/dev/null
+    time ./${1:-rptoy-c} $p $jo | egrep "^ERR"
     sleep .5
   done
-done 2>&1 | egrep real
+done 2>&1 | egrep "^(-|real|ERR)"
