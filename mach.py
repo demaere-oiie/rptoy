@@ -5,7 +5,7 @@ from rom import nam, prog
 from rpython.rlib import jit
 
 from machval import Ctx, Link, Stack
-from terpval import CloBox, IntBox, SeqBox, litInt
+from terpval import CloBox, IntBox, SeqBox, litInt, RegBox
 
 get_location = lambda pc: "%d: %s" % (pc,
         str(prog[pc]) if prog[pc]<DELTA else
@@ -58,13 +58,13 @@ def run(ipc,ini):
             pc = pc+1
             x = ctx[prog[pc]]
             if not isinstance(x,IntBox): pc=fail(pc)
-            elif not x.intval.int_ge(1): pc=fail(pc)
-            else: ctx.append(IntBox(x.intval.int_sub(1)))
+            elif not x.ge(litInt(1)): pc=fail(pc)
+            else: ctx.append(x.sub(litInt(1)))
         elif op == REZ: # nat deconstruction Z
             pc = pc+1
             x = ctx[prog[pc]]
             if not isinstance(x,IntBox): pc=fail(pc)
-            elif not x.intval.int_lt(1): pc=fail(pc)
+            elif not x.lt(litInt(1)): pc=fail(pc)
         elif op == TNI: # any int
             pc = pc+1
             x = ctx[prog[pc]]

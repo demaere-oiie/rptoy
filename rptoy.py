@@ -37,7 +37,7 @@ def main(argv):
         run(ipc,ini)
 
     res = run(ipc,ini)
-    if not isinstance(res,IntBox) or not res.intval.eq(chk.intval):
+    if not isinstance(res,IntBox) or not res.eq(chk):
         print("ERROR:")
         print(res.str())
         print("was not equal to:")

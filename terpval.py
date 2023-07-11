@@ -1,4 +1,5 @@
 from rpython.rlib.rbigint import rbigint
+from rpython.rlib import rarithmetic
 
 class Box(object):
     _attrs_ = []
@@ -7,19 +8,86 @@ class Box(object):
     ekat = lambda self,n: self
 
 class IntBox(Box):
+    pass
+
+class RegBox(IntBox):
+    def __init__(self,val):
+        self.regval = val
+
+    ge  = lambda self, other: (self.regval >= other.regval
+                               if isinstance(other,RegBox) else
+                               other.intval.int_le(self.regval))
+    lt  = lambda self, other: (self.regval < other.regval
+                               if isinstance(other,RegBox) else
+                               other.intval.int_gt(self.regval))
+    eq  = lambda self, other: (self.regval == other.regval
+                               if isinstance(other,RegBox) else
+                               other.intval.int_eq(self.regval))
+
+    def add(self,other):
+        if isinstance(other,RegBox):
+            try: 
+               res = rarithmetic.ovfcheck(self.regval + other.regval)
+            except OverflowError:
+               return self.add(BigBox(rbigint.fromint(other.regval)))
+            return RegBox(res)
+        else:
+            return BigBox(other.intval.int_add(self.regval))
+
+    def sub(self,other):
+        if isinstance(other,RegBox):
+            return RegBox(self.regval - other.regval)
+        else:
+            return BigBox(rbigint.fromint(self.regval).sub(other.intval))
+
+    def mul(self,other):
+        if isinstance(other,RegBox):
+            try: 
+               res = rarithmetic.ovfcheck(self.regval * other.regval)
+            except OverflowError:
+               return self.mul(BigBox(rbigint.fromint(other.regval)))
+            return RegBox(res)
+        else:
+            return BigBox(other.intval.int_mul(self.regval))
+
+    str = lambda self: str(self.regval)
+
+class BigBox(IntBox):
     def __init__(self, val):
         self.intval = val
 
-    ge  = lambda self, other: self.intval.ge(other.intval)
-    lt  = lambda self, other: self.intval.lt(other.intval)
-    add = lambda self, other: IntBox(self.intval.add(other.intval))
-    sub = lambda self, other: IntBox(self.intval.sub(other.intval))
-    mul = lambda self, other: IntBox(self.intval.mul(other.intval))
+    ge  = lambda self, other: (self.intval.ge(other.intval)
+                               if isinstance(other,BigBox) else
+                               self.intval.int_ge(other.regval))
+    lt  = lambda self, other: (self.intval.lt(other.intval)
+                               if isinstance(other,BigBox) else
+                               self.intval.int_lt(other.regval))
+    eq  = lambda self, other: (self.intval.eq(other.intval)
+                               if isinstance(other,BigBox) else
+                               self.intval.int_eq(other.regval))
+
+    def add(self,other):
+        if isinstance(other,BigBox):
+            return BigBox(self.intval.add(other.intval))
+        else:
+            return BigBox(self.intval.int_add(other.regval))
+
+    def sub(self,other):
+        if isinstance(other,BigBox):
+            return BigBox(self.intval.sub(other.intval))
+        else:
+            return BigBox(self.intval.int_sub(other.regval))
+
+    def mul(self,other):
+        if isinstance(other,BigBox):
+            return BigBox(self.intval.mul(other.intval))
+        else:
+            return BigBox(self.intval.int_mul(other.regval))
 
     str = lambda self: self.intval.str()
 
-litInt = lambda n: IntBox(rbigint.fromint(n))
-strInt = lambda s: IntBox(rbigint.fromstr(s))
+litInt = lambda n: RegBox(n)
+strInt = lambda s: BigBox(rbigint.fromstr(s))
 
 class SeqBox(Box):
     def __init__(self, hd, tl):
