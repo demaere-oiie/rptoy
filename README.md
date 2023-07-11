@@ -1,5 +1,5 @@
 # rptoy
-playing with rpython
+playing with rpython: build via `rpython -O jit rptoy.py`
 
 ## goals
 this is an attempt to (a) learn how to structure an [rpython](https://rpython.readthedocs.io/en/latest/) bytecode interpreter, and (b) check that we can get the JIT to optimise in cases we hope it will
