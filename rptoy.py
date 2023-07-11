@@ -64,6 +64,9 @@ jitdriver = jit.JitDriver(greens=['pc'], reds=['ctx','stack','link'],
 
 class Box(object):
     _attrs_ = []
+    len = lambda self: 1
+    take = lambda self,n: self
+    ekat = lambda self,n: self
 
 class IntBox(Box):
     def __init__(self, val):
@@ -79,13 +82,29 @@ class IntBox(Box):
 
 class ListBox(Box):
     def __init__(self, val):
-        self.listval = val
+        self.vlen = val[0].len() + val[1].len()
+        self.head = val[0]
+        self.tail = val[1]
 
     def split(self, frame):
-        xs = self.listval
-        h = len(xs)//2
-        frame.append(dn(xs[:h]))
-        frame.append(dn(xs[h:]))
+        h = self.vlen//2
+        frame.append(self.take(h))
+        frame.append(self.ekat(self.vlen-h))
+
+    len = lambda self: self.vlen
+
+    def take(self,n):
+        if n==self.vlen:         return self
+        elif n<=self.head.len(): return self.head.take(n)
+        else:                    return ListBox((self.head,
+                                     self.tail.take(n-self.head.len())))
+
+    def ekat(self,n):
+        if n==self.vlen:         return self
+        elif n<=self.tail.len(): return self.tail.ekat(n)
+        else:                    return ListBox((
+                                     self.head.ekat(n-self.tail.len()),
+                                     self.tail))
 
     str = lambda self: "<List>"
 
@@ -93,13 +112,9 @@ class CloBox(Box):
     def __init__(self, val):
         self.cloval = val
 
+    len = lambda self: 1
     str = lambda self: "<Closure>"
 
-def up(obj):
-    return obj.listval if isinstance(obj,ListBox) else [obj]
-
-def dn(obj):
-    return ListBox(obj) if len(obj)!=1 else obj[0]
 
 ################################################################################
 
@@ -156,13 +171,8 @@ class Stack(object):
 ################################################################################
 
 def run(ipc,ini):
-    # initialisation mostly to force typing; is there a better way?
     pc = ipc
-    op = HLT
     ctx  = Ctx(ini)
-    flag = False
-    x = Box()
-    y = Box()
     stack = None
     link = None
 
@@ -185,7 +195,7 @@ def run(ipc,ini):
             x = ctx[prog[pc]]
             pc = pc+1
             y = ctx[prog[pc]]
-            ctx.append(dn(up(x)+up(y)))
+            ctx.append(ListBox((x,y)))
         elif op == LAM: # start a frame, cf RHO
             ctx.lam()
         elif op == LIT: # int literal
@@ -195,7 +205,6 @@ def run(ipc,ini):
             pc = pc+1
             x = ctx[prog[pc]]
             if not isinstance(x,ListBox): pc=fail(pc)
-            elif len(x.listval)<2: pc=fail(pc)
             else: x.split(ctx)
         elif op == CUS: # nat deconstruction S(x)
             pc = pc+1
@@ -266,21 +275,20 @@ def run(ipc,ini):
             continue
         elif op == CLO:
             pc = pc+1
-            x = prog[pc]
-            ctx.append(CloBox((x,Link(link,ctx.frame))))
+            u = prog[pc]
+            ctx.append(CloBox((u,Link(link,ctx.frame))))
         elif op == REF:
             pc = pc+1
-            x = prog[pc]
+            u = prog[pc]
             pc = pc+1
-            y = prog[pc]
+            v = prog[pc]
             assert isinstance(link,Link)
-            ctx.append(link.getref(x)[y])
+            ctx.append(link.getref(u)[v])
         elif op == RET:
-            rval = ctx.state
+            x = ctx.state
             assert stack is not None
             ctx,pc,link,stack = stack.pop()
-            ctx.append(rval)
-            flag = False
+            ctx.append(x)
         elif op == HLT: # end run
             break
         pc = pc+1
