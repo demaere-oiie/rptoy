@@ -5,8 +5,8 @@ playing with rpython: build via `rpython -O jit rptoy.py`
 this is an attempt to (a) learn how to structure an [rpython](https://rpython.readthedocs.io/en/latest/) bytecode interpreter, and (b) check that we can get the JIT to optimise in the cases we hope it will
 
 ## preliminary results
-very promising! *gcd* shows that multiway loop nests are JIT'ed as well as plain loops; that *cfac* is JIT'ed to similar performance as *fac* shows that the JIT successfully elides
-the gratuitous closure call that occurs in the former and not in the latter. *csum* and *sum* put a much cheaper op in the closure, and the JIT still performs admirably. Finally *tare*
+very promising! `gcd` shows that multiway loop nests are JIT'ed as well as plain loops; that `cfac` is JIT'ed to similar performance as *fac* shows that the JIT successfully elides
+the gratuitous closure call that occurs in the former and not in the latter. `csum` and `sum` put a much cheaper op in the closure, and the JIT still performs admirably. Finally `tare`
 (400x the null program) shows that we don't have an onerous startup overhead.
 
 | test  | w/ JIT | no JIT |
@@ -32,7 +32,7 @@ the gratuitous closure call that occurs in the former and not in the latter. *cs
 </dl>
 
 ## things learned so far
-- *rpython* does a much better job with class-structured internals
+- `rpython` does a much better job with class-structured internals
 - to make things easy on the typer, use *assert* and bind directly to variables
 - `can_enter_jit` and `jit_merge_point` must not have any ops in between
 - the "virtualizables" argument is plural but can only take a single argument
