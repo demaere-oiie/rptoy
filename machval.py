@@ -1,3 +1,5 @@
+from rpython.rlib import jit
+
 class Frame(object):
     def __init__(self):
         self.frame = [None, None, None, None, None, None, None, None]
@@ -12,7 +14,9 @@ class Frame(object):
     final = lambda self: self.frame[abs(self.fp-1)]
 
 class Ctx(object):
+    _virtualizable_ = ['state','frame','flag']
     def __init__(self, val):
+        self = jit.hint(self, access_directly=True, fresh_virtualizable=True)
         self.state = val
         self.frame = None
         self.flag = False

@@ -14,6 +14,7 @@ argp = lambda pc: ("" if len(prog)<=pc or not prog[pc]<DELTA else
                    " "+str(prog[pc])+argp(pc+1))
 
 jitdriver = jit.JitDriver(greens=['pc'], reds=['ctx','stack','link'],
+                          virtualizables=['ctx'],
                           get_printable_location=get_location)
 
 jitcfg = lambda s: jit.set_user_param(jitdriver, s)
