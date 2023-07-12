@@ -11,12 +11,12 @@ the gratuitous closure call that occurs in the former and not in the latter. *cs
 
 | test  | w/ JIT | no JIT |
 | ------------- | ------------- | -------- |
-| tare |        0m0.006s |      0m0.009s |
-| fac | 0m0.118s |      0m0.144s |
-| cfac |        0m0.120s |      0m0.166s |
-| gcd | 0m0.025s |      0m0.082s |
-| sum | 0m0.026s |      0m0.108s |
-| csum |        0m0.027s |      0m0.163s |
+| tare |        0m0.007s |      0m0.008s|
+| fac | 0m0.115s |      0m0.147s|
+| cfac |        0m0.114s |      0m0.176s|
+| gcd | 0m0.019s |      0m0.090s|
+| sum | 0m0.013s |      0m0.128s|
+| csum |        0m0.014s |      0m0.188s|
 
 <dl>
   <dt>fac</dt>
@@ -38,6 +38,7 @@ the gratuitous closure call that occurs in the former and not in the latter. *cs
 - the "virtualizables" argument is plural but can only take a single argument
 - interpreter locals that aren't live between calls don't need to be listed in *reds*
 - machine int/bigint shimmering is very effective
+- virtualisation is very sensitive to other changes, but when it works, it's amazing
 
 ## future work
 - continue testing/integrating CF Bolz-Tereick's other recommendations
