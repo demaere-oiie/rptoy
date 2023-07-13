@@ -16,11 +16,14 @@ def gcd(i):
        elif n.lt(m): m=m.sub(n)
    return m
 ```
-but without a method JIT, it seems we have no hope of generating this from the meta level.
+but without a method JIT, it seems ~~we have no hope of generating this from the meta level~~.
+
+Actually, that's not true. The JIT does eventually generate a CFG which includes the effective loop above, but for $REASONS it only gets there after generating several partial approximations. Maybe I can play with some JIT settings to improve this behaviour?
+
 ## branchless loops trace well
 As with all the other tests, rpython's tracing JIT does an amazing job when given a straight-line loop.
 ```
-gcd := (x@x,x),Rep.(y,max.(m,n)-y @ m,n ~ y:=min.(m,n))
+gcd := (m@m,m),Rep.(y,max.(m,n)-y @ m,n ~ y:=min.(m,n))
 ```
 gets JIT'ted to something that approaches the handwritten:
 ```
