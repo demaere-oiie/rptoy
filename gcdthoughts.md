@@ -4,7 +4,7 @@ The `gcd` test, with its execution pattern of (A|B)*, runs afoul of the unpredic
 gcd := (x@x,x),Rep.(x-y,y @ x,(y<x) :: x,y-x @ (x<y),y)
 ```
 
-It's not a big deal for me at this point, because the JIT still manages to come in within a factor of 2 of handwritten rpython, but I did learn a few things while playing with it:
+Luckily it turns out that it's just a warm-up effect: it takes many more repetitions than a straight-line loop before an unpredictably branching loop is fully JIT'ed. In the case of `gcd`, a million (or two) calls suffices —at least at the tested arguments— for the dual-branch loop to break even (or beat) other solutions.
 
 ## non-meta rpython does well
 AOT compilation at the rpython level does well with the following (handwritten) code:
@@ -18,10 +18,10 @@ def gcd(i):
 ```
 but without a method JIT, it seems ~~we have no hope of generating this from the meta level~~.
 
-Actually, that's not true. The JIT does eventually generate a CFG which includes the effective loop above, but for $REASONS it only gets there after generating several partial approximations. Maybe I can play with some JIT settings to improve this behaviour?
+Actually, that's not true. The JIT does eventually generate a CFG which includes the effective loop above, but for $REASONS it only gets there after generating several partial approximations. With enough repetitions, the JIT even manages to beat the handcoded rpython. Maybe I can play with some JIT settings to improve this behaviour?
 
-## branchless loops trace well
-As with all the other tests, rpython's tracing JIT does an amazing job when given a straight-line loop.
+## branchless loops trace well, quickly
+As with all the other tests, rpython's tracing JIT rapidly does an amazing job when given a straight-line loop.
 ```
 gcd := (m@m,m),Rep.(y,max.(m,n)-y @ m,n ~ y:=min.(m,n))
 ```
