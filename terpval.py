@@ -8,7 +8,7 @@ class Box(object):
     ekat = lambda self,n: self
 
 class IntBox(Box):
-    pass
+    _attrs_ = []
 
 class RegBox(IntBox):
     def __init__(self,val):
@@ -16,13 +16,16 @@ class RegBox(IntBox):
 
     ge  = lambda self, other: (self.regval >= other.regval
                                if isinstance(other,RegBox) else
-                               other.intval.int_le(self.regval))
+                               other.intval.int_le(self.regval)
+                               if isinstance(other,BigBox) else False)
     lt  = lambda self, other: (self.regval < other.regval
                                if isinstance(other,RegBox) else
-                               other.intval.int_gt(self.regval))
+                               other.intval.int_gt(self.regval)
+                               if isinstance(other,BigBox) else False)
     eq  = lambda self, other: (self.regval == other.regval
                                if isinstance(other,RegBox) else
-                               other.intval.int_eq(self.regval))
+                               other.intval.int_eq(self.regval)
+                               if isinstance(other,BigBox) else False)
 
     def add(self,other):
         if isinstance(other,RegBox):
@@ -31,13 +34,13 @@ class RegBox(IntBox):
             except OverflowError:
                return self.add(BigBox(rbigint.fromint(other.regval)))
             return RegBox(res)
-        else:
+        elif isinstance(other,BigBox):
             return BigBox(other.intval.int_add(self.regval))
 
     def sub(self,other):
         if isinstance(other,RegBox):
             return RegBox(self.regval - other.regval)
-        else:
+        elif isinstance(other,BigBox):
             return BigBox(rbigint.fromint(self.regval).sub(other.intval))
 
     def mul(self,other):
@@ -47,7 +50,7 @@ class RegBox(IntBox):
             except OverflowError:
                return self.mul(BigBox(rbigint.fromint(other.regval)))
             return RegBox(res)
-        else:
+        elif isinstance(other,BigBox):
             return BigBox(other.intval.int_mul(self.regval))
 
     str = lambda self: str(self.regval)
@@ -58,30 +61,33 @@ class BigBox(IntBox):
 
     ge  = lambda self, other: (self.intval.ge(other.intval)
                                if isinstance(other,BigBox) else
-                               self.intval.int_ge(other.regval))
+                               self.intval.int_ge(other.regval)
+                               if isinstance(other,RegBox) else False)
     lt  = lambda self, other: (self.intval.lt(other.intval)
                                if isinstance(other,BigBox) else
-                               self.intval.int_lt(other.regval))
+                               self.intval.int_lt(other.regval)
+                               if isinstance(other,RegBox) else False)
     eq  = lambda self, other: (self.intval.eq(other.intval)
                                if isinstance(other,BigBox) else
-                               self.intval.int_eq(other.regval))
+                               self.intval.int_eq(other.regval)
+                               if isinstance(other,RegBox) else False)
 
     def add(self,other):
         if isinstance(other,BigBox):
             return BigBox(self.intval.add(other.intval))
-        else:
+        elif isinstance(other,RegBox):
             return BigBox(self.intval.int_add(other.regval))
 
     def sub(self,other):
         if isinstance(other,BigBox):
             return BigBox(self.intval.sub(other.intval))
-        else:
+        elif isinstance(other,RegBox):
             return BigBox(self.intval.int_sub(other.regval))
 
     def mul(self,other):
         if isinstance(other,BigBox):
             return BigBox(self.intval.mul(other.intval))
-        else:
+        elif isinstance(other,RegBox):
             return BigBox(self.intval.int_mul(other.regval))
 
     str = lambda self: self.intval.str()

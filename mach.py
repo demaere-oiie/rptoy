@@ -19,16 +19,17 @@ jitdriver = jit.JitDriver(greens=['pc'], reds=['ctx','stack','link'],
 
 jitcfg = lambda s: jit.set_user_param(jitdriver, s)
 
+@jit.elidable
+def fail(pc):
+        while prog[pc] != RHO:
+            pc = pc+1
+        return pc
+
 def run(ipc,ini):
     pc = ipc
     ctx  = Ctx(ini)
     stack = None
     link = None
-
-    def fail(pc):
-        while prog[pc] != RHO:
-            pc = pc+1
-        return pc
 
     while True:
         jitdriver.jit_merge_point(pc=pc,ctx=ctx,stack=stack,link=link)
