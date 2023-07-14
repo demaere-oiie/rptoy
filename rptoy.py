@@ -13,11 +13,11 @@ gcdres = litInt(6)
 sumres = litInt(500500)
 zero = litInt(0)
 
-conf = {"fac":  (facargs, 800, facres),
-        "cfac": (facargs, 800, facres),
-        "sum":  (facargs, 2000, sumres),
-        "csum": (facargs, 2000, sumres),
-        "gcd":  (gcdargs, 16000, gcdres)}
+conf = {"fac":  (facargs, 8000, facres),
+        "cfac": (facargs, 8000, facres),
+        "sum":  (facargs, 20000, sumres),
+        "csum": (facargs, 20000, sumres),
+        "gcd":  (gcdargs, 160000, gcdres)}
 
 def main(argv):
     if len(argv)>2:
@@ -31,7 +31,7 @@ def main(argv):
         if DELTA<=prog[i]:
             print(get_location(i))
 
-    ini, reps, chk = conf.get(sel,(zero,400,zero))
+    ini, reps, chk = conf.get(sel,(zero,4000,zero))
 
     if len(argv)>3:
         reps = int(argv[3])

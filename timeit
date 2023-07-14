@@ -1,7 +1,7 @@
 for p in tare fac cfac gcd sum csum; do
   echo "- $p"
-  for jo in "" off; do
-    time ./${1:-rptoy-c} $p $jo | egrep "^ERR"
+  for jo in threshold=1000 off; do
+    time ./${1:-rptoy-c} $p $jo $2 | egrep "^ERR"
     sleep .5
   done
 done 2>&1 | egrep "^(-|real|ERR)"
