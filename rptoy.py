@@ -33,6 +33,9 @@ def main(argv):
 
     ini, reps, chk = conf.get(sel,(zero,400,zero))
 
+    if len(argv)>3:
+        reps = int(argv[3])
+
     for i in range(reps):
         run(ipc,ini)
 
