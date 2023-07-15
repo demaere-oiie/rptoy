@@ -1,6 +1,7 @@
 from rom import DELTA
 from rom import REP,COM,LAM,LIT,MOC,CUS,REZ,MUL,RHO
-from rom import SUB,XGE,XLT,HLT,APP,CLO,REF,RET,TNI,ADD
+from rom import SUB,XGE,XLT,HLT,APP,CLO,REF,RET,TNI
+from rom import ADD,ALT,RAP
 from rom import nam, prog
 from rpython.rlib import jit
 
@@ -40,6 +41,11 @@ def run(ipc,ini):
                 jitdriver.can_enter_jit(pc=pc,ctx=ctx,stack=stack,link=link)
                 continue
             pc = pc+1
+        elif op == ALT: # skip on success
+            pc = pc+1
+            u = prog[pc]
+            if ctx.flag:
+                pc = pc + u
         elif op == COM: # list construction, cf MOC
             pc = pc+1
             x = ctx[prog[pc]]
@@ -122,6 +128,18 @@ def run(ipc,ini):
             assert isinstance(x,CloBox)
             pc, link = x.cloval
             ctx = Ctx(y)
+            continue
+        elif op == RAP:
+            pc = pc+1
+            x = ctx[prog[pc]]
+            pc = pc+1
+            y = ctx[prog[pc]]
+            assert isinstance(x,CloBox)
+            pc, link = x.cloval
+            ctx.state = y
+            ctx.frame = None
+            ctx.flag = True
+            jitdriver.can_enter_jit(pc=pc,ctx=ctx,stack=stack,link=link)
             continue
         elif op == CLO:
             pc = pc+1
