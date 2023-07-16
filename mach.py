@@ -135,7 +135,11 @@ def run(ipc,ini):
             pc = pc+1
             y = ctx[prog[pc]]
             assert isinstance(x,CloBox)
-            pc, link = x.cloval
+            pc, nlink = x.cloval
+            assert isinstance(link,Link)
+            assert isinstance(nlink,Link)
+            assert link.olink == nlink.olink
+            assert link.frame == nlink.frame
             ctx.state = y
             ctx.frame = None
             ctx.flag = True
