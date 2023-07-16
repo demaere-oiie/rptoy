@@ -26,6 +26,16 @@ def fail(pc):
             pc = pc+1
         return pc
 
+@jit.elidable
+def tailpos(pc):
+    if prog[pc] != RHO:
+        return False
+    pc = pc+1
+    while prog[pc] == ALT:
+        pc = pc+1
+        pc = pc+prog[pc]+1
+    return prog[pc] == RET
+
 def run(ipc,ini):
     pc = ipc
     ctx  = Ctx(ini)
@@ -124,10 +134,22 @@ def run(ipc,ini):
             x = ctx[prog[pc]]
             pc = pc+1
             y = ctx[prog[pc]]
-            stack = Stack(ctx, pc, link, stack)
+            opc, olink = pc, link
             assert isinstance(x,CloBox)
-            pc, link = x.cloval
-            ctx = Ctx(y)
+            pc, nlink = x.cloval
+            if (nlink is not None and
+                olink is not None and
+                nlink.frame == olink.frame and
+                nlink.olink == olink.olink and
+                tailpos(opc+1)):
+                ctx.state = y
+                ctx.frame = None
+                ctx.flag = True
+                jitdriver.can_enter_jit(pc=pc,ctx=ctx,stack=stack,link=link)
+            else:
+                link = nlink
+                stack = Stack(ctx, opc, olink, stack)
+                ctx = Ctx(y)
             continue
         elif op == RAP:
             pc = pc+1
