@@ -20,14 +20,18 @@ conf = {"fac":  (facargs, 8000, facres),
         "csum": (facargs, 20000, sumres),
         "hsum": (facargs, 20000, sumres),
         "gcd":  (gcdargs, 160000, gcdres),
+        "hgcd": (gcdargs, 160000, gcdres),
         "odd":  (facargs, 20000, zero),
         "rodd": (facargs, 20000, zero),
 }
 
 def main(argv):
+    kludge = "function_threshold=-1"
     if len(argv)>2:
         print(argv[2])
-        jitcfg(argv[2]) # eg "off"
+        jitcfg(kludge+","+argv[2] if argv[2]!="off" else argv[2])
+    else:
+        jitcfg(kludge)
 
     sel = argv[1] if len(argv)>1 else "fac"
 
