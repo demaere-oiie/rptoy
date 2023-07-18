@@ -61,7 +61,21 @@ l3 = [LAM, CUS, 0, REF, 1, 1, APP, 2, 1, RHO]
 l4 = [LAM, REZ, 0, LIT, 0, RHO]
 prodd = pad(10,l0) + pad(20,l1+alt(l2)+[RET]) + pad(20,l3+alt(l4)+[RET])
 
-prog = pad(600,pad(500,pad(400,pad(300,pad(200,pad(100,
-   pcfac)+pfac)+pgcd)+pcsum)+psum)+podd)+prodd
+# hfac := (go.(n,1) @ n ~ go:=(a @ 0,a :: go $ n-1,n*a @ (n>0),a))
+l0 = [LAM, CLO, 715, LIT, 1, COM, 0, 2, APP, 1, 3, RHO]
+l1 = [LAM, MOC, 0, CUS, 1, TNI, 2, MUL, 1, 2, COM, 3, 4,
+      REF, 1, 1, APP, 6, 5, RHO]
+l2 = [LAM, MOC, 0, REZ, 1, RHO]
+phfac = pad(15, l0) + pad(35,l1+alt(l2)+[RET])
+
+# hsum := (go.(n,0) @ n ~ go:=(a @ 0,a :: go $ n-1,n+a @ (n>0),a))
+l0 = [LAM, CLO, 815, LIT, 0, COM, 0, 2, APP, 1, 3, RHO]
+l1 = [LAM, MOC, 0, CUS, 1, TNI, 2, ADD, 1, 2, COM, 3, 4,
+      REF, 1, 1, APP, 6, 5, RHO]
+l2 = [LAM, MOC, 0, REZ, 1, RHO]
+phsum = pad(15, l0) + pad(35,l1+alt(l2)+[RET])
+
+prog = pad(800,pad(700,pad(600,pad(500,pad(400,pad(300,pad(200,pad(100,
+   pcfac)+pfac)+pgcd)+pcsum)+psum)+podd)+prodd)+phfac)+phsum
 code = {"cfac":0, "fac":100, "gcd":200, "csum":300, "sum":400,
-        "odd":500, "rodd":600}
+        "odd":500, "rodd":600, "hfac":700, "hsum":800}

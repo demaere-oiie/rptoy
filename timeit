@@ -1,4 +1,4 @@
-for p in tare fac cfac gcd sum csum odd rodd; do
+for p in tare fac cfac hfac gcd sum csum hsum odd rodd; do
   echo "- $p"
   for jo in function_threshold=-1 off; do
     (time ./${1:-rptoy-c} $p $jo $2 || echo "ERROR $?") | egrep "^ERR"
