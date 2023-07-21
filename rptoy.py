@@ -15,9 +15,14 @@ zero = litInt(0)
 
 conf = {"fac":  (facargs, 8000, facres),
         "cfac": (facargs, 8000, facres),
+        "hfac": (facargs, 8000, facres),
         "sum":  (facargs, 20000, sumres),
         "csum": (facargs, 20000, sumres),
-        "gcd":  (gcdargs, 160000, gcdres)}
+        "hsum": (facargs, 20000, sumres),
+        "gcd":  (gcdargs, 160000, gcdres),
+        "hgcd": (gcdargs, 160000, gcdres),
+        "odd":  (facargs, 20000, zero),
+}
 
 def main(argv):
     if len(argv)>2:

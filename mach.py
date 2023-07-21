@@ -1,6 +1,7 @@
 from rom import DELTA
 from rom import REP,COM,LAM,LIT,MOC,CUS,REZ,MUL,RHO
-from rom import SUB,XGE,XLT,HLT,APP,CLO,REF,RET,TNI,ADD
+from rom import SUB,XGE,XLT,HLT,APP,CLO,REF,RET,TNI
+from rom import ADD,ALT
 from rom import nam, prog
 from rpython.rlib import jit
 
@@ -25,6 +26,23 @@ def fail(pc):
             pc = pc+1
         return pc
 
+@jit.elidable
+def tailpos(pc):
+    if prog[pc] != RHO:
+        return False
+    pc = pc+1
+    while prog[pc] == ALT:
+        pc = pc+1
+        pc = pc+prog[pc]+1
+    return prog[pc] == RET
+
+def linkeq(x,y):
+    if x is None and y is None: return True
+    return (isinstance(x,Link) and
+            isinstance(y,Link) and
+            x.olink == y.olink and
+            x.frame == y.frame)
+
 def run(ipc,ini):
     pc = ipc
     ctx  = Ctx(ini)
@@ -40,6 +58,11 @@ def run(ipc,ini):
                 jitdriver.can_enter_jit(pc=pc,ctx=ctx,stack=stack,link=link)
                 continue
             pc = pc+1
+        elif op == ALT: # skip on success
+            pc = pc+1
+            u = prog[pc]
+            if ctx.flag:
+                pc = pc + u
         elif op == COM: # list construction, cf MOC
             pc = pc+1
             x = ctx[prog[pc]]
@@ -118,10 +141,20 @@ def run(ipc,ini):
             x = ctx[prog[pc]]
             pc = pc+1
             y = ctx[prog[pc]]
-            stack = Stack(ctx, pc, link, stack)
+            opc, olink = pc, link
             assert isinstance(x,CloBox)
-            pc, link = x.cloval
-            ctx = Ctx(y)
+            pc, nlink = x.cloval
+            if linkeq(olink,nlink) and tailpos(opc+1):
+                ctx.state = y
+                ctx.frame = None
+                ctx.flag  = True
+                jitdriver.can_enter_jit(pc=pc,ctx=ctx,stack=stack,link=link)
+            else:
+                link = nlink
+                stack = Stack(ctx.state,ctx.frame,ctx.flag, opc, olink, stack)
+                ctx.state = y
+                ctx.frame = None
+                ctx.flag  = False
             continue
         elif op == CLO:
             pc = pc+1
@@ -137,7 +170,7 @@ def run(ipc,ini):
         elif op == RET:
             x = ctx.state
             assert stack is not None
-            ctx,pc,link,stack = stack.pop()
+            ctx.state,ctx.frame,ctx.flag, pc, link, stack = stack.pop()
             ctx.append(x)
         elif op == HLT: # end run
             break

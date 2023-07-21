@@ -1,7 +1,7 @@
-for p in tare fac cfac gcd sum csum; do
+for p in tare fac cfac hfac gcd hgcd sum csum hsum odd; do
   echo "- $p"
-  for jo in threshold=1000 off; do
-    time ./${1:-rptoy-c} $p $jo $2 | egrep "^ERR"
+  for jo in vec=0 off; do
+    (time ./${1:-rptoy-c} $p $jo $2 || echo "ERROR $?") | egrep "^ERR"
     sleep .5
   done
 done 2>&1 | egrep "^(-|real|ERR)"

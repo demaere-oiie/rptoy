@@ -44,10 +44,13 @@ class Link(object):
     getref = lambda self,x: self.frame if x==1 else self.olink.getref(x-1)
 
 class Stack(object):
-    def __init__(self, ctx, pc, link, prev):
-        self.ctx = ctx
+    def __init__(self, state, frame, flag, pc, link, prev):
+        self.state = state
+        self.frame = frame
+        self.flag  = flag
         self.pc = pc
         self.link = link
         self.prev = prev
 
-    pop = lambda self: (self.ctx, self.pc, self.link, self.prev)
+    pop = lambda self: (self.state, self.frame, self.flag,
+                        self.pc, self.link, self.prev)
