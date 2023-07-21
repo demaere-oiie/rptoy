@@ -6,29 +6,43 @@ this is an attempt to (a) learn how to structure an [rpython](https://rpython.re
 
 ## preliminary results
 very promising! `gcd` shows that multiway loop nests are JIT'ed as well as plain loops; that `cfac` is JIT'ed to similar performance as *fac* shows that the JIT successfully elides
-the gratuitous closure call that occurs in the former and not in the latter. `csum` and `sum` put a much cheaper op in the closure, and the JIT still performs admirably. Finally `tare`
-(4000x the null program) shows that we don't have an onerous startup overhead.
+the gratuitous closure call that occurs in the former and not in the latter. `csum` and `sum` put a much cheaper op in the closure, and the JIT still performs admirably.
+`hfac` and `hsum` are jitted equivalently to their non-inner-function variants, and `hgcd` comes close.
+Finally `tare` (4000x the null program) shows that we don't have an onerous startup overhead.
 
 | test  | w/ JIT | no JIT |
 | ------------- | ------------- | -------- |
-| tare |	0m0.008s |	0m0.008s|
-| fac |	0m0.895s |	0m1.360s|
-| cfac |	0m0.876s |	0m1.555s|
-| gcd |	0m0.037s |	0m0.674s|
-| sum |	0m0.034s |	0m1.098s|
-| csum |	0m0.034s |	0m1.736s|
+| tare |        0m0.008s |      0m0.008s|
+| fac | 0m0.886s |      0m1.316s|
+| cfac |        0m0.883s |      0m1.641s|
+| hfac |        0m0.870s |      0m1.382s|
+| gcd | 0m0.038s |      0m0.670s|
+| hgcd |        0m0.051s |      0m0.756s|
+| sum | 0m0.035s |      0m1.085s|
+| csum |        0m0.034s |      0m1.884s|
+| hsum |        0m0.035s |      0m1.229s|
+| odd | 0m0.032s |      0m0.650s|
+
 
 <dl>
   <dt>fac</dt>
   <dd>Tail recursive factorial with an accumulator</dd>
   <dt>cfac</dt>
   <dd>Same as <em>fac</em> but with a gratuitous closure call enclosing the multiplication</dd>
+  <dt>hfac</dt>
+  <dd>factorial again, but with a recursive inner helper</dd>
   <dt>gcd</dt>
   <dd>Dijkstra's symmetric two-branched subtractive gcd; tests bridge generation</dd>
+  <dt>hgcd</dt>
+  <dd>GCD with recursive inner helper</dd>
   <dt>sum</dt>
   <dd>Like <em>fac</em> but adds instead of multiplies to increase the relative cost of control flow</dd>
   <dt>csum</dt>
   <dd>Like <em>cfac</em>, it wraps the addition in a gratuitous closure call</dd>
+  <dt>hsum</dt>
+  <dd>Like <em>hfac</em></dd>
+  <dt>odd</dt>
+  <dd>Parity check via mutually recursive inner helpers</dd>
 </dl>
 
 ## things learned so far
