@@ -4,7 +4,7 @@ The `gcd` test, with its execution pattern of (A|B)*, runs afoul of the unpredic
 gcd := (x@x,x),Rep.(x-y,y @ x,(y<x) :: x,y-x @ (x<y),y)
 ```
 
-Luckily it turns out that it's just a warm-up effect: it takes many more repetitions than a straight-line loop before an unpredictably branching loop is fully JIT'ed. In the case of `gcd`, a million (or two) calls suffices —at least at the tested arguments— for the dual-branch loop to break even (or beat) other solutions.
+Luckily it turns out that it's just a warm-up effect: it takes many more repetitions (due to multiple passes through the JIT logic before convergence?) than a straight-line loop before an unpredictably branching loop is fully JIT'ed. In the case of `gcd`, a hundred thousand calls suffices —at least at the tested arguments— for the dual-branch loop to break even (or beat) other solutions.
 
 ## non-meta rpython does well
 AOT compilation at the rpython level does well with the following (handwritten) code:
