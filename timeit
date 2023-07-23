@@ -1,4 +1,4 @@
-for p in tare fac cfac hfac gcd hgcd sum csum hsum odd; do
+for p in tare fac cfac hfac gcd hgcd sum csum hsum odd $PROG; do
   echo "- $p"
   for jo in vec=0 off; do
     (time ./${1:-rptoy-c} $p $jo $2 || echo "ERROR $?") | egrep "^ERR"

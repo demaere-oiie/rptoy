@@ -21,6 +21,7 @@ conf = {"fac":  (facargs, 8000, facres),
         "hsum": (facargs, 20000, sumres),
         "gcd":  (gcdargs, 160000, gcdres),
         "hgcd": (gcdargs, 160000, gcdres),
+        "xgcd": (gcdargs, 160000, gcdres),
         "odd":  (facargs, 20000, zero),
 }
 
@@ -32,7 +33,7 @@ def main(argv):
     sel = argv[1] if len(argv)>1 else "fac"
 
     ipc = code.get(sel,len(prog)-1)
-    for i in range(ipc,min(ipc+50,len(prog))):
+    for i in range(ipc,min(ipc+60,len(prog))):
         if DELTA<=prog[i]:
             print(get_location(i))
 

@@ -1,7 +1,7 @@
 from rom import DELTA
 from rom import REP,COM,LAM,LIT,MOC,CUS,REZ,MUL,RHO
 from rom import SUB,XGE,XLT,HLT,APP,CLO,REF,RET,TNI
-from rom import ADD,ALT
+from rom import ADD,ALT,CLX
 from rom import nam, prog
 from rpython.rlib import jit
 
@@ -22,9 +22,9 @@ jitcfg = lambda s: jit.set_user_param(jitdriver, s)
 
 @jit.elidable
 def fail(pc):
-        while prog[pc] != RHO:
-            pc = pc+1
-        return pc
+    while prog[pc] != RHO:
+        pc = pc+1
+    return pc
 
 @jit.elidable
 def tailpos(pc):
@@ -36,18 +36,11 @@ def tailpos(pc):
         pc = pc+prog[pc]+1
     return prog[pc] == RET
 
-def linkeq(x,y):
-    if x is None and y is None: return True
-    return (isinstance(x,Link) and
-            isinstance(y,Link) and
-            x.olink == y.olink and
-            x.frame == y.frame)
-
 def run(ipc,ini):
-    pc = ipc
-    ctx  = Ctx(ini)
+    pc    = ipc
+    ctx   = Ctx(ini)
     stack = None
-    link = None
+    link  = None
 
     while True:
         jitdriver.jit_merge_point(pc=pc,ctx=ctx,stack=stack,link=link)
@@ -144,22 +137,26 @@ def run(ipc,ini):
             opc, olink = pc, link
             assert isinstance(x,CloBox)
             pc, nlink = x.cloval
-            if linkeq(olink,nlink) and tailpos(opc+1):
+            if olink==nlink and tailpos(opc+1):
                 ctx.state = y
                 ctx.frame = None
-                ctx.flag  = True
+                ctx.env   = None
                 jitdriver.can_enter_jit(pc=pc,ctx=ctx,stack=stack,link=link)
             else:
                 link = nlink
                 stack = Stack(ctx.state,ctx.frame,ctx.flag, opc, olink, stack)
                 ctx.state = y
                 ctx.frame = None
-                ctx.flag  = False
+                ctx.env   = None
             continue
         elif op == CLO:
             pc = pc+1
             u = prog[pc]
-            ctx.append(CloBox((u,Link(link,ctx.frame))))
+            ctx.append(CloBox((u,ctx.getenv(link))))
+        elif op == CLX:
+            pc = pc+1
+            u = prog[pc]
+            ctx.append(CloBox((u,None)))
         elif op == REF:
             pc = pc+1
             u = prog[pc]
@@ -171,6 +168,7 @@ def run(ipc,ini):
             x = ctx.state
             assert stack is not None
             ctx.state,ctx.frame,ctx.flag, pc, link, stack = stack.pop()
+            ctx.env = None
             ctx.append(x)
         elif op == HLT: # end run
             break

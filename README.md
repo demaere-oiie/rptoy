@@ -17,7 +17,7 @@ Finally `tare` (4000x the null program) shows that we don't have an onerous star
 | cfac |        0m0.883s |      0m1.641s|
 | hfac |        0m0.870s |      0m1.382s|
 | gcd | 0m0.038s |      0m0.670s|
-| hgcd |        0m0.051s |      0m0.756s|
+| hgcd |        0m0.042s |      0m0.740s|
 | sum | 0m0.035s |      0m1.085s|
 | csum |        0m0.034s |      0m1.884s|
 | hsum |        0m0.035s |      0m1.229s|

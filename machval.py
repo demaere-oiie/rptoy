@@ -20,6 +20,7 @@ class Ctx(object):
         self.state = val
         self.frame = None
         self.flag = False
+        self.env = None
 
     def lam(self):
         self.frame = Frame()
@@ -30,16 +31,21 @@ class Ctx(object):
         self.state = self.frame.final()
         self.frame = None
         self.flag = True
-        
+
     def append(self, val):
         self.frame.append(val)
+
+    def getenv(self, olink):
+        if self.env is None or self.env.frame is not self.frame.frame:
+            self.env = Link(olink, self.frame.frame)
+        return self.env
 
     __getitem__ = lambda self, key: self.frame[key]
 
 class Link(object):
     def __init__(self, old, frame):
-         self.olink = old
-         self.frame = frame
+        self.olink = old
+        self.frame = frame
 
     getref = lambda self,x: self.frame if x==1 else self.olink.getref(x-1)
 

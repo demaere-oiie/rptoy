@@ -1,13 +1,13 @@
 nam = """
 REP COM LAM LIT MOC CUS REZ MUL RHO SUB XGE XLT HLT APP CLO REF RET TNI
-ADD ALT
+ADD ALT CLX
 """.strip().split()
 
-DELTA=1000
+DELTA=5000
 
 REP,COM,LAM,LIT,MOC,CUS,REZ,MUL,RHO,\
 SUB,XGE,XLT,HLT,APP,CLO,REF,RET,TNI,\
-ADD,ALT = range(DELTA,DELTA+len(nam))
+ADD,ALT,CLX = range(DELTA,DELTA+len(nam))
 
 rep = lambda xs: xs+[REP, len(xs)]
 alt = lambda xs: [ALT, len(xs)]+xs
@@ -76,7 +76,15 @@ l2 = [LAM, MOC, 0, XLT, 2, 1, SUB, 1, 2, COM, 3, 2, REF, 1, 1, APP, 5, 4, RHO]
 l3 = [LAM, MOC, 0, RHO]
 phgcd = pad(10,l0) + l1+alt(l2 + alt(l3))+[RET]
 
-prog = [r for c in [pcfac,pfac,pgcd,pcsum,psum,podd,prodd,phfac,phsum,phgcd]
+# xgcd := (go ~ go:=(x@x,x :: go $ x-y,y @ (x>y),y :: go $ x,y-x @ x,(y>x)))
+l0 = [LAM, CLX, 510, APP, 1, 0, RHO]
+l1 = [LAM, MOC, 0, XLT, 1, 2, SUB, 2, 1, COM, 1, 3, CLX, 510, APP, 5, 4, RHO]
+l2 = [LAM, MOC, 0, XLT, 2, 1, SUB, 1, 2, COM, 3, 2, CLX, 510, APP, 5, 4, RHO]
+l3 = [LAM, MOC, 0, RHO]
+pxgcd = pad(10,l0) + l1+alt(l2 + alt(l3))+[RET]
+
+prog = [r for c in [pcfac,pfac,pgcd,pcsum,psum,pxgcd,prodd,
+                    phfac,phsum,phgcd]
           for r in pad(100,c)]
 code = {"cfac":0, "fac":100, "gcd":200, "csum":300, "sum":400,
-        "XXXX":500, "odd":600, "hfac":700, "hsum":800, "hgcd":900}
+        "xgcd":500, "odd":600, "hfac":700, "hsum":800, "hgcd":900}
